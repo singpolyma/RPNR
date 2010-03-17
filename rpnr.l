@@ -98,6 +98,8 @@ int main(void) {
 	puts("require 'rpnr-runtime'");
 	for(i = 0; i < stack_length; i++) {
 		puts(stack[i]);
+		free(stack[i]);
 	}
+	free(stack);
 	return r;
 }

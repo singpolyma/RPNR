@@ -12,8 +12,10 @@ void do_message(const char *);
 %}
 %%
 
+^#.+$                                         ; /* ignore comments */
+\/[^\/]*\/|'[^']*'|\"[^\"]*\"                 { push(yytext);       }
 :[^ \t\r\n\(\)]+|[^0-9a-zA-Z \t\r\n\(\)]+     { do_message(yytext); }
-\/[^\/]+\/|'[^']+'|\"[^\"]+\"|[^ \t\r\n\(\)]+ { push(yytext);       }
+[^ \t\r\n\(\)]+                               { push(yytext);       }
 [ \t\r\n\(\)]                                 ; /* ignore whitespace */
 
 %%

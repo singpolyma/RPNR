@@ -65,7 +65,7 @@ void do_message(const char *message) {
 		}
 		obj[strlen(obj)-1] = '|';
 		HANDLE_FATAL(obj = realloc(obj, (strlen(obj)+strlen("lambda{ }")+strlen(arg)+1)*sizeof(*obj)));
-		memmove(obj+strlen("lambda{")-(obj[0] == ':'), obj, strlen(obj));
+		memmove(obj+strlen("lambda{")-(obj[0] == ':'), obj, (strlen(obj)+1)*sizeof(*obj));
 		strcpy(obj, "lambda");
 		obj[6] = '{';
 		strcat(obj, " ");
@@ -74,7 +74,7 @@ void do_message(const char *message) {
 		push(obj);
 	} else {
 		HANDLE_FATAL(obj = realloc(obj, (strlen(obj)+strlen("().magic_send(,())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj)));
-		memmove(obj+1, obj, strlen(obj));
+		memmove(obj+1, obj, (strlen(obj)+1)*sizeof(*obj));
 		obj[0] = '(';
 		strcat(obj, ").magic_send(");
 		if(message[0] != ':') strcat(obj, ":'");

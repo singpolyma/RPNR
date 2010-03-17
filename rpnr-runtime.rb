@@ -51,9 +51,9 @@ class Object
 	# Handle multiple-airity methods being passed a list magically
 	def magic_send(message, arg)
 		arity = method(message).arity
-		if arity < 1
+		if arity == 0
 			send(message)
-		elsif arg.is_a?(Array) && arity > 1
+		elsif arg.is_a?(Array) && arity != 1
 			send(message, *arg)
 		else
 			send(message, arg)

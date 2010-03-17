@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #define HANDLE_FATAL(x) do { if(!(x)) { fputs("A fatal error occured.\n", stderr); abort(); } } while (0) /* Simple error handling */
 /* Global stack */
 size_t stack_size = 0;
@@ -42,6 +43,10 @@ char *pop() {
 
 /* Process a "message" by popping top two elements and pushing the result */
 void do_message(const char *message) {
+	if(stack_length < 2) {
+		fputs("Syntax error.\n", stderr);
+		exit(EXIT_FAILURE);
+	}
 	char *arg = pop();
 	char *obj = pop();
 	if(strcmp(message, "=") == 0 || strcmp(message, ":=") == 0) { /* Assignment (special case) */

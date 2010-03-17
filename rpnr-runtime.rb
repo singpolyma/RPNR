@@ -16,27 +16,27 @@ Object.send(:define_method, :';', lambda {|b| b })
 
 class Object
 	# Control flow as methods
-	def while(cond, block=nil)
-		while cond.is_a?(Proc) ? cond.call : cond
+	def while(block)
+		while self.is_a?(Proc) ? self.call : self
 			block && block.call
 			block_given? && yield
 		end
 	end
-	def until(cond, block=nil)
-		until cond.is_a?(Proc) ? cond.call : cond
+	def until(block)
+		until self.is_a?(Proc) ? self.call : self
 			block && block.call
 			block_given? && yield
 		end
 	end
-	def if(cond, block_if_true=nil, block_if_false=nil)
-		if cond.is_a?(Proc) ? cond.call : cond
-			block_if_true && block_if_true.call
+	def if(block_if_true, block_if_false=nil)
+		if self.is_a?(Proc) ? self.call : self
+			block_if_true.is_a?(Proc) ? block_if_true.call : block_if_true
 		else
-			block_if_false && block_if_false.call
+			block_if_false.is_a?(Proc) ? block_if_false.call : block_if_false
 		end
 	end
-	def unless(cond, block_if_true=nil, block_if_false=nil)
-		unless cond.is_a?(Proc) ? cond.call : cond
+	def unless(block_if_true, block_if_false=nil)
+		unless self.is_a?(Proc) ? self.call : self
 			block_if_true && block_if_true.call
 		else
 			block_if_false && block_if_false.call

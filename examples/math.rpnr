@@ -1,0 +1,11 @@
+# Just do some basic math stuff
+1 1 + nil :puts
+
+factorial 'n'
+	n 1 ==
+		1
+		'' factorial n 1 - :call n * :lambda ,
+	:if
+:lambda =
+
+factorial 5 :call nil :puts

@@ -1,0 +1,35 @@
+= Reverse Polish Notation for Ruby =
+
+== Buiding ==
+
+You will need make, lex, and a C compiler.
+
+Run make
+
+== Running ==
+
+The rpnr utility takes RPNR on standard in and outputs valid Ruby on stanadard out.
+
+rpnr < code.rpnr > code.rb
+
+== RPNR Syntax ==
+
+* Tokens are seperated by whitespace
+* '(' and ')' are whitespace
+* Tokens that are all non-alphanumeric or start with a ':' are messages
+* Tokens in double quotes are strings.
+* Tokens in single quotes are symbols.
+* Tokens in /.*/ are regular expressions.
+* Tokens that are numbers are numbers
+
+When a non-message is encountered, it is pushed onto the stack.
+
+When a message is encountered:
+* The top two items are popped
+* The next-to-top item is passed the message with the argument being the top
+
+=== Edge cases ===
+
+'a,b' (a b +) :lambda #=> lambda{|a,b| a.send(:'+', b)}
+
+a 1 = #=> a = 1

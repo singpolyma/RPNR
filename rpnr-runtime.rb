@@ -48,15 +48,29 @@ class Object
 		Kernel::puts(to_s)
 	end
 
-	# Handle multiple-airity methods being passed a list magically
+	# Handle multiple-airity methods being passed a list/block magically
 	def magic_send(message, arg)
 		arity = method(message).arity
 		if arity == 0
-			send(message)
-		elsif arg.is_a?(Array) && arity != 1
-			send(message, *arg)
-		else
+			send(message, &arg)
+		elsif arity == 1
 			send(message, arg)
+		else
+			case arg
+				when nil
+					send(message)
+				when Array
+					if arg.length > arity.abs && arg.last.is_a?(Proc)
+						blk = arg.pop
+						send(message, *arg, &blk)
+					else
+						send(message, *arg)
+					end
+				when Proc
+					send(message, &arg)
+				else
+					send(message, arg)
+			end
 		end
 	end
 end

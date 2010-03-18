@@ -1,0 +1,16 @@
+# Playing around with OOP
+
+Animal Class nil :new =
+	Animal 'initialize' 'name'
+		@name name =
+	:lambda , :define_method
+	Animal 'name' :attr_accessor
+
+Dog Class Animal :new =
+	Dog 'speak' 'n'
+		n ('i' "Woof!" nil :puts :lambda) :times
+	:lambda , :define_method
+
+adog Dog "Rufus" :new =
+adog nil :name nil :puts
+adog 2 :speak

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define HANDLE_FATAL(x) do { if(!(x)) { fputs("A fatal error occured.\n", stderr); abort(); } } while (0) /* Simple error handling */
 /* Global stack */
 size_t stack_size = 0;
 size_t stack_length = 0;
@@ -10,6 +9,8 @@ char **stack = NULL;
 /* Function prototypes */
 void push(const char *);
 void do_message(const char *);
+void *xmalloc(size_t);
+void *xrealloc(void *, size_t);
 %}
 
 /*These (flex-only) avoid GCC warnings in the generated code.
@@ -31,17 +32,17 @@ void do_message(const char *);
 void push(const char *item) {
 	char *s;
 	if(item[0] == '\'') { /* symbol, prepend ':' */
-		HANDLE_FATAL(s = malloc((strlen(item)+1+1)*sizeof(*s)));
+		s = xmalloc((strlen(item)+1+1)*sizeof(*s));
 		s[0] = ':';
 		s[1] = '\0';
 	} else {
-		HANDLE_FATAL(s = malloc((strlen(item)+1)*sizeof(*s)));
+		s = xmalloc((strlen(item)+1)*sizeof(*s));
 		s[0] = '\0';
 	}
 	strcat(s, item);
 	if(stack_length == stack_size) { /* Stack is full, enlarge */
 		stack_size = (stack_size+1)*2;
-		HANDLE_FATAL(stack = realloc(stack, stack_size*sizeof(*stack)));
+		stack = xrealloc(stack, stack_size*sizeof(*stack));
 	}
 	stack[stack_length++] = s; /* Push s on as new last element */
 }
@@ -61,7 +62,7 @@ void do_message(const char *message) {
 	arg = pop();
 	obj = pop();
 	if(strcmp(message, "=") == 0 || strcmp(message, ":=") == 0) { /* Assignment (special case) */
-		HANDLE_FATAL(obj = realloc(obj, (strlen(obj)+strlen("=()")+strlen(arg)+1)*sizeof(*obj)));
+		obj = xrealloc(obj, (strlen(obj)+strlen("=()")+strlen(arg)+1)*sizeof(*obj));
 		strcat(obj, "=(");
 		strcat(obj, arg);
 		strcat(obj, ")");
@@ -73,7 +74,7 @@ void do_message(const char *message) {
 			obj[0] = '|';
 		}
 		obj[strlen(obj)-1] = '|';
-		HANDLE_FATAL(obj = realloc(obj, (strlen(obj)+strlen("lambda{ }")+strlen(arg)+1)*sizeof(*obj)));
+		obj = xrealloc(obj, (strlen(obj)+strlen("lambda{ }")+strlen(arg)+1)*sizeof(*obj));
 		memmove(obj+strlen("lambda{")-(obj[0] == ':'), obj, (strlen(obj)+1)*sizeof(*obj));
 		strcpy(obj, "lambda");
 		obj[6] = '{';
@@ -82,7 +83,7 @@ void do_message(const char *message) {
 		strcat(obj, "}");
 		push(obj);
 	} else {
-		HANDLE_FATAL(obj = realloc(obj, (strlen(obj)+strlen("().magic_send(,())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj)));
+		obj = xrealloc(obj, (strlen(obj)+strlen("().magic_send(,())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj));
 		memmove(obj+1, obj, (strlen(obj)+1)*sizeof(*obj));
 		obj[0] = '(';
 		strcat(obj, ").magic_send(");
@@ -98,6 +99,25 @@ void do_message(const char *message) {
 }
 
 int yywrap() { return 1; }
+
+void *xmalloc(size_t sz) {
+	void *ret = malloc(sz);
+	if(ret == NULL) {
+		perror("malloc");
+		abort();
+	}
+	return ret;
+}
+
+void *xrealloc(void *p, size_t sz) {
+	void *ret = realloc(p, sz);
+	if(ret == NULL) {
+		perror("realloc");
+		abort();
+	}
+	return ret;
+}
+
 int main(void) {
 	int r;
 	size_t i;

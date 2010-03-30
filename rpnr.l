@@ -69,10 +69,10 @@ void do_assignment(void) {
 	char *arg, *obj;
 	get_stackitems(&arg, &obj);
 
-	obj = xrealloc(obj, (strlen(obj)+strlen("=()")+strlen(arg)+1)*sizeof(*obj));
-	strcat(obj, "=(");
+	obj = xrealloc(obj, (strlen(obj)+strlen("=(\n\n)")+strlen(arg)+1)*sizeof(*obj));
+	strcat(obj, "=(\n");
 	strcat(obj, arg);
-	strcat(obj, ")");
+	strcat(obj, "\n)");
 	push(obj);
 }
 
@@ -86,14 +86,19 @@ void do_lambda(void) {
 		obj[0] = '|';
 	}
 	obj[strlen(obj)-1] = '|';
-	obj = xrealloc(obj, (strlen(obj)+strlen("lambda{ }")+strlen(arg)+1)*sizeof(*obj));
-	memmove(obj+strlen("lambda{")-(obj[0] == ':'), obj, (strlen(obj)+1)*sizeof(*obj));
-	strcpy(obj, "lambda");
-	obj[6] = '{';
+	obj = xrealloc(obj, (strlen(obj)+strlen("lambda{\n \n}")+strlen(arg)+1)*sizeof(*obj));
+	memmove(obj+strlen("lambda{\n")-(obj[0] == ':'), obj, (strlen(obj)+1)*sizeof(*obj));
+
+	/*Prepend (the '\n' overwrites the '\0' strcpy adds)*/
+	strcpy(obj, "lambda{");
+	obj[7] = '\n';
+
+	/*Append these*/
 	strcat(obj, " ");
 	strcat(obj, arg);
-	strcat(obj, "}");
+	strcat(obj, "\n}");
 	push(obj);
+	/*Help brace-matching editors:  }*/
 }
 
 /* Process a "message" by popping top two elements and pushing the result */
@@ -101,14 +106,14 @@ void do_message(const char *message) {
 	char *arg, *obj;
 	get_stackitems(&arg, &obj);
 
-	obj = xrealloc(obj, (strlen(obj)+strlen("().magic_send(,())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj));
+	obj = xrealloc(obj, (strlen(obj)+strlen("().\nmagic_send(,\n())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj));
 	memmove(obj+1, obj, (strlen(obj)+1)*sizeof(*obj));
 	obj[0] = '(';
-	strcat(obj, ").magic_send(");
+	strcat(obj, ").\nmagic_send(");
 	if(message[0] != ':') strcat(obj, ":'");
 	strcat(obj, message);
 	if(message[0] != ':') strcat(obj, "'");
-	strcat(obj, ",(");
+	strcat(obj, ",\n(");
 	strcat(obj, arg);
 	strcat(obj, "))");
 	free(arg);

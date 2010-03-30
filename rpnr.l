@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define HANDLE_FATAL(x) do { if(!(x)) { fputs("A fatal error occured.\n", stderr); abort(); } } while (0) /* Simple error handling */
 /* Global stack */
 size_t stack_size = 0;
@@ -10,6 +11,13 @@ char **stack = NULL;
 void push(const char *);
 void do_message(const char *);
 %}
+
+/*These (flex-only) avoid GCC warnings in the generated code.
+  Removing them will not break anything.
+*/
+%option nounput
+%option always-interactive
+
 %%
 
 ^#.+$                                         ; /* ignore comments */
@@ -45,12 +53,13 @@ char *pop() {
 
 /* Process a "message" by popping top two elements and pushing the result */
 void do_message(const char *message) {
+	char *arg,*obj;
 	if(stack_length < 2) {
 		fputs("Syntax error.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	char *arg = pop();
-	char *obj = pop();
+	arg = pop();
+	obj = pop();
 	if(strcmp(message, "=") == 0 || strcmp(message, ":=") == 0) { /* Assignment (special case) */
 		HANDLE_FATAL(obj = realloc(obj, (strlen(obj)+strlen("=()")+strlen(arg)+1)*sizeof(*obj)));
 		strcat(obj, "=(");

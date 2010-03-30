@@ -9,6 +9,8 @@ char **stack = NULL;
 /* Function prototypes */
 void push(const char *);
 void do_message(const char *);
+void do_assignment(void);
+void do_lambda(void);
 void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 %}
@@ -23,6 +25,8 @@ void *xrealloc(void *, size_t);
 
 ^#.+$                                         ; /* ignore comments */
 \/[^\/]*\/|'[^']*'|\"[^\"]*\"                 { push(yytext);       }
+:?=                                           { do_assignment();    }
+:lambda                                       { do_lambda();        }
 :[^ \t\r\n\(\)]+|[^0-9a-zA-Z \t\r\n\(\)]+     { do_message(yytext); }
 [^ \t\r\n\(\)]+                               { push(yytext);       }
 [ \t\r\n\(\)]                                 ; /* ignore whitespace */
@@ -52,50 +56,63 @@ char *pop() {
 	return stack[--stack_length];
 }
 
-/* Process a "message" by popping top two elements and pushing the result */
-void do_message(const char *message) {
-	char *arg,*obj;
+static void get_stackitems(char **arg, char **obj) {
 	if(stack_length < 2) {
 		fputs("Syntax error.\n", stderr);
 		exit(EXIT_FAILURE);
 	}
-	arg = pop();
-	obj = pop();
-	if(strcmp(message, "=") == 0 || strcmp(message, ":=") == 0) { /* Assignment (special case) */
-		obj = xrealloc(obj, (strlen(obj)+strlen("=()")+strlen(arg)+1)*sizeof(*obj));
-		strcat(obj, "=(");
-		strcat(obj, arg);
-		strcat(obj, ")");
-		push(obj);
-	} else if(strcmp(message, ":lambda") == 0) { /* Lambda (special case) */
-		if(obj[0] == ':') { /* Handle case where arguments are a symbol and push() has prepended : */
-			obj[1] = '|';
-		} else {
-			obj[0] = '|';
-		}
-		obj[strlen(obj)-1] = '|';
-		obj = xrealloc(obj, (strlen(obj)+strlen("lambda{ }")+strlen(arg)+1)*sizeof(*obj));
-		memmove(obj+strlen("lambda{")-(obj[0] == ':'), obj, (strlen(obj)+1)*sizeof(*obj));
-		strcpy(obj, "lambda");
-		obj[6] = '{';
-		strcat(obj, " ");
-		strcat(obj, arg);
-		strcat(obj, "}");
-		push(obj);
+	*arg=pop();
+	*obj=pop();
+}
+
+void do_assignment(void) {
+	char *arg, *obj;
+	get_stackitems(&arg, &obj);
+
+	obj = xrealloc(obj, (strlen(obj)+strlen("=()")+strlen(arg)+1)*sizeof(*obj));
+	strcat(obj, "=(");
+	strcat(obj, arg);
+	strcat(obj, ")");
+	push(obj);
+}
+
+void do_lambda(void) {
+	char *arg, *obj;
+	get_stackitems(&arg, &obj);
+
+	if(obj[0] == ':') { /* Handle case where arguments are a symbol and push() has prepended : */
+		obj[1] = '|';
 	} else {
-		obj = xrealloc(obj, (strlen(obj)+strlen("().magic_send(,())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj));
-		memmove(obj+1, obj, (strlen(obj)+1)*sizeof(*obj));
-		obj[0] = '(';
-		strcat(obj, ").magic_send(");
-		if(message[0] != ':') strcat(obj, ":'");
-		strcat(obj, message);
-		if(message[0] != ':') strcat(obj, "'");
-		strcat(obj, ",(");
-		strcat(obj, arg);
-		strcat(obj, "))");
-		free(arg);
-		push(obj);
+		obj[0] = '|';
 	}
+	obj[strlen(obj)-1] = '|';
+	obj = xrealloc(obj, (strlen(obj)+strlen("lambda{ }")+strlen(arg)+1)*sizeof(*obj));
+	memmove(obj+strlen("lambda{")-(obj[0] == ':'), obj, (strlen(obj)+1)*sizeof(*obj));
+	strcpy(obj, "lambda");
+	obj[6] = '{';
+	strcat(obj, " ");
+	strcat(obj, arg);
+	strcat(obj, "}");
+	push(obj);
+}
+
+/* Process a "message" by popping top two elements and pushing the result */
+void do_message(const char *message) {
+	char *arg, *obj;
+	get_stackitems(&arg, &obj);
+
+	obj = xrealloc(obj, (strlen(obj)+strlen("().magic_send(,())")+strlen(":''")+strlen(message)+strlen(arg)+1)*sizeof(*obj));
+	memmove(obj+1, obj, (strlen(obj)+1)*sizeof(*obj));
+	obj[0] = '(';
+	strcat(obj, ").magic_send(");
+	if(message[0] != ':') strcat(obj, ":'");
+	strcat(obj, message);
+	if(message[0] != ':') strcat(obj, "'");
+	strcat(obj, ",(");
+	strcat(obj, arg);
+	strcat(obj, "))");
+	free(arg);
+	push(obj);
 }
 
 int yywrap() { return 1; }
